@@ -32,8 +32,7 @@ void VulkanApp::initVulkan() {
 
     createRenderPass();                // ⑦ 创建 Render Pass（知道颜色格式、深度格式后才行）
     createCommandPool();              // ⑪ 提前建好命令池，供后续所有 buffer 使用
-    createDescriptorSetLayout();      // ⑧ 设置 Descriptor Layout（着色器 uniform）
-
+    
     createDepthResources();           // ⑨ 创建深度缓冲区
 
     createFramebuffers();             // ⑩ Framebuffer 绑定 color+depth 视图，必须在 renderPass 和 imageView 之后
@@ -45,6 +44,7 @@ void VulkanApp::initVulkan() {
     createVertexBuffer();             // ⑮ 顶点数据
     createUniformBuffers();           // ⑯ 创建 UBO，用于变换矩阵等
 
+    createDescriptorSetLayout();      // ⑧ 设置 Descriptor Layout（着色器 uniform）
     createDescriptorPool();           // ⑰ 描述符池
     createDescriptorSets();           // ⑱ 分配和填充 descriptor set
 
@@ -99,12 +99,26 @@ void VulkanApp::cleanup() {
     for (auto uniformBufferMemory: uniformBuffersMemory) {
         vkFreeMemory(device, uniformBufferMemory, nullptr);
     }
+
+    // 释放纹理相关资源
+    vkDestroySampler(device, textureSampler, nullptr);
+    vkDestroyImageView(device, textureImageView, nullptr);
+    vkDestroyImage(device, textureImage, nullptr);
+    vkFreeMemory(device, textureImageMemory, nullptr);
     
     // 释放Descriptor Pool
+    vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
     vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 
     // 释放Command Pool
     vkDestroyCommandPool(device, commandPool, nullptr);
+
+    // 释放同步对象
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        vkDestroySemaphore(device, imageAvailableSemaphores[i], nullptr);
+        vkDestroySemaphore(device, renderFinishedSemaphores[i], nullptr);
+        vkDestroyFence(device, inFlightFences[i], nullptr);
+    }
 
     // 最后销毁device和instance
     vkDestroyDevice(device, nullptr);
@@ -113,6 +127,8 @@ void VulkanApp::cleanup() {
     // GLFW资源释放
     glfwDestroyWindow(window);
     glfwTerminate();
+
+    std::cout << "cleanup done\n";
 }
 
 void VulkanApp::createInstance() {
