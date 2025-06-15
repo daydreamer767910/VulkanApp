@@ -23,7 +23,7 @@ if "%ARG%"=="shader" (
 
 if "%ARG%"=="build" (
     echo Building application...
-    cmake -S . -B %BUILD_DIR%
+    cmake -S . -B %BUILD_DIR% -G "MinGW Makefiles"
     cmake --build %BUILD_DIR%
     goto :done
 )
