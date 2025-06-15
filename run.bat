@@ -40,7 +40,7 @@ if "%ARG%"=="all" (
     glslc -fshader-stage=frag %FRAG_SHADER% -o %FRAG_SPV%
 
     echo === Building application...
-    cmake -S . -B %BUILD_DIR%
+    cmake -S . -B %BUILD_DIR% -G "MinGW Makefiles"
     cmake --build %BUILD_DIR%
 
     echo === Running application...
