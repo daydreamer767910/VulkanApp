@@ -1,3 +1,0 @@
-E:/bill/develope/CPlus/VulkanApp/build/CMakeFiles/glfw_demo.dir
-E:/bill/develope/CPlus/VulkanApp/build/CMakeFiles/edit_cache.dir
-E:/bill/develope/CPlus/VulkanApp/build/CMakeFiles/rebuild_cache.dir

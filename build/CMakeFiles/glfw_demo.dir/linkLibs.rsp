@@ -1,1 +1,0 @@
-  -Ld:/VulkanSDK/1.4.313.2/Lib  -LE:/bill/develope/CPlus/VulkanApp/glfw/lib  -lglfw3 -lgdi32 -lvulkan-1 -lopengl32 -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 
