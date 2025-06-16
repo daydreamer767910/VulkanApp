@@ -55,6 +55,8 @@ public:
 private:
     void initWindow();
     void initVulkan();
+    void cleanupSwapChain();
+    void recreateSwapChain();
     void mainLoop();
     void cleanup();
 
@@ -91,8 +93,7 @@ private:
                              VkBuffer &buffer, VkDeviceMemory &bufferMemory);
     void createCommandBuffers();         // 编写渲染指令
     void createSyncObjects();            // 创建信号量和栅栏用于 CPU/GPU 同步
-    void cleanupSwapChain();
-    void recreateSwapChain();
+    
     void createUniformBuffers();
     void updateUniformBuffer(uint32_t currentImage);
     void createDescriptorSetLayout();

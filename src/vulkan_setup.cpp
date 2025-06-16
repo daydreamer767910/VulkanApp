@@ -1082,9 +1082,11 @@ void VulkanApp::recreateSwapChain() {
     createSwapChain();
     createImageViews();
     createRenderPass();       // ✅ 重新构建 RenderPass（与颜色格式有关）
-    createGraphicsPipeline(); // ✅ 渲染管线依赖 viewport 和 renderPass
+    
     createDepthResources();   // ✅ 重新创建深度图像和视图（尺寸变化）
     createFramebuffers();
+
+    createGraphicsPipeline(); // ✅ 渲染管线依赖 viewport 和 renderPass
     createCommandBuffers();   // ✅ framebuffer 数量变了，需重新录制命令
 }
 
