@@ -5,13 +5,28 @@
 #include <iostream>
 #include <fstream>
 
+extern std::vector<Vertex> vertices;
+extern std::vector<uint16_t> indices;
+
 const std::vector<const char*> deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 
-void VulkanApp::run() {
+void VulkanApp::init() {
+    appendCone(glm::vec3(0.0f, 0.0f, -1.0f), 0.3f, 0.50f, 36);
+    appendSphere(glm::vec3(0.0f, 0.0f, 0.0f), 0.5f);
+    // 初始立方体（主 cube）在原点
+    appendCube( glm::vec3(0.0f, 0.1f, 1.0f), 0.3f);
+
+    // 小光源 cube
+    //appendCube( glm::vec3(2.0f, 0.0f, 0.0f), 0.05f); // X+
+    //appendCube( glm::vec3(0x0, 2.0f, 0.0f), 0.05f); // Y+
+    appendCube( glm::vec3(0.0f, 0.0f, 2.0f), 0.05f); // Z+
     initWindow();
     initVulkan();
+}
+
+void VulkanApp::run() {
     mainLoop();
     cleanup();
 }
@@ -42,6 +57,7 @@ void VulkanApp::initVulkan() {
     createTextureSampler();          // ⑭ 创建采样器
 
     createVertexBuffer();             // ⑮ 顶点数据
+    createIndexBuffer();
     createUniformBuffers();           // ⑯ 创建 UBO，用于变换矩阵等
 
     createDescriptorSetLayout();      // ⑧ 设置 Descriptor Layout（着色器 uniform）
@@ -900,6 +916,42 @@ void VulkanApp::createVertexBuffer() {
     vkUnmapMemory(device, vertexBufferMemory);
 }
 
+void VulkanApp::createIndexBuffer() {
+    VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+
+    createBuffer(
+        bufferSize,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        stagingBuffer,
+        stagingBufferMemory
+    );
+
+    // 把索引数据拷贝到 staging buffer
+    void* data;
+    vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+    memcpy(data, indices.data(), static_cast<size_t>(bufferSize));
+    vkUnmapMemory(device, stagingBufferMemory);
+
+    // 创建 index buffer，本身只用于 GPU
+    createBuffer(
+        bufferSize,
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        indexBuffer,
+        indexBufferMemory
+    );
+
+    copyBuffer(stagingBuffer, indexBuffer, bufferSize);
+
+    // 清理 staging
+    vkDestroyBuffer(device, stagingBuffer, nullptr);
+    vkFreeMemory(device, stagingBufferMemory, nullptr);
+}
+
 void VulkanApp::updateUniformBuffer(uint32_t currentImage) {
     UniformBufferObject ubo{};
     // -------------------------
@@ -963,6 +1015,46 @@ void VulkanApp::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
     vkBindBufferMemory(device, buffer, bufferMemory, 0);
 }
 
+void VulkanApp::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) {
+    VkCommandBufferAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandPool = commandPool;  // 你应该已有这个变量
+    allocInfo.commandBufferCount = 1;
+
+    VkCommandBuffer commandBuffer;
+    vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+
+    // 开始录制
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+    vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+    // 拷贝命令
+    VkBufferCopy copyRegion{};
+    copyRegion.srcOffset = 0; // 从头开始
+    copyRegion.dstOffset = 0; // 拷贝到目标缓冲区的开头
+    copyRegion.size = size;
+    vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+    // 结束录制
+    vkEndCommandBuffer(commandBuffer);
+
+    // 提交命令缓冲区并等待执行完成
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandBuffer;
+
+    vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+    vkQueueWaitIdle(graphicsQueue);
+
+    // 清理临时命令缓冲
+    vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+}
+
 void VulkanApp::createCommandBuffers() {
     commandBuffers.resize(swapChainFramebuffers.size());
 
@@ -1005,6 +1097,7 @@ void VulkanApp::createCommandBuffers() {
         VkBuffer vertexBuffers[] = {vertexBuffer};
         VkDeviceSize offsets[] = {0};
         vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
+        vkCmdBindIndexBuffer(commandBuffers[i], indexBuffer, 0, VK_INDEX_TYPE_UINT16);
 
         vkCmdBindDescriptorSets(
             commandBuffers[i],
@@ -1016,7 +1109,15 @@ void VulkanApp::createCommandBuffers() {
             0, nullptr
         );
 
-        vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(vertices.size()), 1, 0, 0);
+        //vkCmdDraw(commandBuffers[i], static_cast<uint32_t>(vertices.size()), 1, 0, 0);
+        vkCmdDrawIndexed(
+            commandBuffers[i],
+            static_cast<uint32_t>(indices.size()), // index count
+            1,  // instance count
+            0,  // first index
+            0,  // vertex offset
+            0   // first instance
+        );
 
         vkCmdEndRenderPass(commandBuffers[i]);
 
@@ -1391,7 +1492,7 @@ void VulkanApp::createImage(
 
 void VulkanApp::createTextureImage() {
     int texWidth, texHeight, texChannels;
-    stbi_uc* pixels = stbi_load("1.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+    stbi_uc* pixels = stbi_load("1.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
     VkDeviceSize imageSize = texWidth * texHeight * 4;
 
     if (!pixels) {

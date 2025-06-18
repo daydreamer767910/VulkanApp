@@ -7,7 +7,7 @@
 
 struct Vertex {
     glm::vec3 pos;
-    glm::vec3 color;
+    glm::vec3 normal;
     glm::vec2 texCoord;
 
     static VkVertexInputBindingDescription getBindingDescription() {
@@ -29,7 +29,7 @@ struct Vertex {
         attributeDescriptions[1].binding = 0;
         attributeDescriptions[1].location = 1;
         attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-        attributeDescriptions[1].offset = offsetof(Vertex, color);
+        attributeDescriptions[1].offset = offsetof(Vertex, normal);
 
         attributeDescriptions[2].binding = 0;
         attributeDescriptions[2].location = 2;
@@ -40,52 +40,6 @@ struct Vertex {
     }
 };
 
-const std::vector<Vertex> vertices = {
-    // 前面（红色）
-    {{-0.5f, -0.5f,  0.5f}, {1, 0, 0}, {0.0f, 0.0f}},  // 左下
-    {{ 0.5f,  0.5f,  0.5f}, {1, 0, 0}, {1.0f, 1.0f}},  // 右上
-    {{ 0.5f, -0.5f,  0.5f}, {1, 0, 0}, {1.0f, 0.0f}},  // 右下
-    {{-0.5f, -0.5f,  0.5f}, {1, 0, 0}, {0.0f, 0.0f}},  // 左下
-    {{-0.5f,  0.5f,  0.5f}, {1, 0, 0}, {0.0f, 1.0f}},  // 左上
-    {{ 0.5f,  0.5f,  0.5f}, {1, 0, 0}, {1.0f, 1.0f}},  // 右上
-
-    // 后面（绿色）
-    {{-0.5f, -0.5f, -0.5f}, {0, 1, 0}, {1.0f, 0.0f}},  // 右下
-    {{ 0.5f,  0.5f, -0.5f}, {0, 1, 0}, {0.0f, 1.0f}},  // 左上
-    {{ 0.5f, -0.5f, -0.5f}, {0, 1, 0}, {0.0f, 0.0f}},  // 左下
-    {{-0.5f, -0.5f, -0.5f}, {0, 1, 0}, {1.0f, 0.0f}},  // 右下
-    {{-0.5f,  0.5f, -0.5f}, {0, 1, 0}, {1.0f, 1.0f}},  // 右上
-    {{ 0.5f,  0.5f, -0.5f}, {0, 1, 0}, {0.0f, 1.0f}},  // 左上
-
-    // 左面（蓝色）
-    {{-0.5f,  0.5f,  0.5f}, {0, 0, 1}, {1.0f, 1.0f}},  // 右上
-    {{-0.5f, -0.5f, -0.5f}, {0, 0, 1}, {0.0f, 0.0f}},  // 左下
-    {{-0.5f,  0.5f, -0.5f}, {0, 0, 1}, {0.0f, 1.0f}},  // 左上
-    {{-0.5f,  0.5f,  0.5f}, {0, 0, 1}, {1.0f, 1.0f}},  // 右上
-    {{-0.5f, -0.5f,  0.5f}, {0, 0, 1}, {1.0f, 0.0f}},  // 右下
-    {{-0.5f, -0.5f, -0.5f}, {0, 0, 1}, {0.0f, 0.0f}},  // 左下
-
-    // 右面（黄色）
-    {{ 0.5f,  0.5f,  0.5f}, {1, 1, 0}, {0.0f, 1.0f}},  // 左上
-    {{ 0.5f, -0.5f, -0.5f}, {1, 1, 0}, {1.0f, 0.0f}},  // 右下
-    {{ 0.5f,  0.5f, -0.5f}, {1, 1, 0}, {1.0f, 1.0f}},  // 右上
-    {{ 0.5f,  0.5f,  0.5f}, {1, 1, 0}, {0.0f, 1.0f}},  // 左上
-    {{ 0.5f, -0.5f,  0.5f}, {1, 1, 0}, {0.0f, 0.0f}},  // 左下
-    {{ 0.5f, -0.5f, -0.5f}, {1, 1, 0}, {1.0f, 0.0f}},  // 右下
-
-    // 上面（青色）
-    {{-0.5f,  0.5f, -0.5f}, {0, 1, 1}, {0.0f, 0.0f}},  // 左下
-    {{ 0.5f,  0.5f,  0.5f}, {0, 1, 1}, {1.0f, 1.0f}},  // 右上
-    {{ 0.5f,  0.5f, -0.5f}, {0, 1, 1}, {1.0f, 0.0f}},  // 右下
-    {{-0.5f,  0.5f, -0.5f}, {0, 1, 1}, {0.0f, 0.0f}},  // 左下
-    {{-0.5f,  0.5f,  0.5f}, {0, 1, 1}, {0.0f, 1.0f}},  // 左上
-    {{ 0.5f,  0.5f,  0.5f}, {0, 1, 1}, {1.0f, 1.0f}},  // 右上
-
-    // 下面（品红）
-    {{-0.5f, -0.5f, -0.5f}, {1, 0, 1}, {1.0f, 1.0f}},  // 右上
-    {{ 0.5f, -0.5f,  0.5f}, {1, 0, 1}, {0.0f, 0.0f}},  // 左下
-    {{ 0.5f, -0.5f, -0.5f}, {1, 0, 1}, {0.0f, 1.0f}},  // 左上
-    {{-0.5f, -0.5f, -0.5f}, {1, 0, 1}, {1.0f, 1.0f}},  // 右上
-    {{-0.5f, -0.5f,  0.5f}, {1, 0, 1}, {1.0f, 0.0f}},  // 右下
-    {{ 0.5f, -0.5f,  0.5f}, {1, 0, 1}, {0.0f, 0.0f}},  // 左下
-};
+void appendCube(glm::vec3 center, float size);
+void appendSphere(glm::vec3 center,float radius,int segments = 36,int rings = 18);
+void appendCone(glm::vec3 center,float radius,float height,int segments = 36);

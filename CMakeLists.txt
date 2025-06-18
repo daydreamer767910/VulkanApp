@@ -15,7 +15,7 @@ include_directories(${CMAKE_SOURCE_DIR}/glfw/include)
 link_directories(${CMAKE_SOURCE_DIR}/glfw/lib)
 
 # 生成可执行文件
-add_executable(${PROJECT_NAME} src/main.cpp src/vulkan_setup.cpp)
+add_executable(${PROJECT_NAME} src/main.cpp src/vulkan_setup.cpp src/vertex.cpp)
 
 # 链接 GLFW 和系统库
 target_link_libraries(${PROJECT_NAME} glfw3 gdi32 vulkan-1 opengl32)

@@ -21,10 +21,6 @@ const std::vector<const char*> validationLayers = {
     "VK_LAYER_KHRONOS_validation"
 };
 
-/*struct UniformBufferObject {
-    float time;
-    alignas(16) glm::vec3 padding;  // 保证16字节对齐，或用 glm::vec4 替代
-};*/
 struct UniformBufferObject {
     glm::mat4 model;
     glm::mat4 view;
@@ -50,6 +46,7 @@ struct QueueFamilyIndices {
 
 class VulkanApp {
 public:
+    void init();
     void run();
 
 private:
@@ -88,14 +85,16 @@ private:
     void createFramebuffers();           // 将图像视图附加到 framebuffer
     void createCommandPool();            // 命令池，用于管理提交到 GPU 的命令缓冲区
     void createVertexBuffer();           // 顶点缓冲区：储存三角形顶点
+    void createIndexBuffer();
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, 
                              VkMemoryPropertyFlags properties, 
                              VkBuffer &buffer, VkDeviceMemory &bufferMemory);
+    void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
     void createCommandBuffers();         // 编写渲染指令
     void createSyncObjects();            // 创建信号量和栅栏用于 CPU/GPU 同步
     
     void createUniformBuffers();
-    void updateUniformBuffer(uint32_t currentImage);
+    
     void createDescriptorSetLayout();
     void createDescriptorPool();
     void createDescriptorSets();
@@ -113,6 +112,8 @@ private:
     void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
     VkCommandBuffer beginSingleTimeCommands();
     void endSingleTimeCommands(VkCommandBuffer commandBuffer);
+
+    void updateUniformBuffer(uint32_t currentImage);
     void drawFrame();
 
     GLFWwindow* window;
@@ -134,6 +135,8 @@ private:
     VkCommandPool commandPool;
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMemory;
+    VkBuffer indexBuffer;
+    VkDeviceMemory indexBufferMemory;
     std::vector<VkCommandBuffer> commandBuffers;
     std::vector<VkSemaphore> imageAvailableSemaphores;
     std::vector<VkSemaphore> renderFinishedSemaphores;
